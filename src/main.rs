@@ -45,6 +45,7 @@ extern crate futures;
 extern crate tokio_core;
 extern crate tokio_io;
 extern crate trust_dns;
+extern crate daemonize;
 
 use std::cell::RefCell;
 use std::env;
@@ -54,6 +55,9 @@ use std::net::{SocketAddr, Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 use std::rc::Rc;
 use std::str;
 use std::time::Duration;
+use std::fs::File;
+
+use daemonize::Daemonize;
 
 use futures::future;
 use futures::{Future, Stream, Poll, Async};
@@ -70,7 +74,8 @@ fn main() {
 
     // Take the first command line argument as an address to listen on, or fall
     // back to just some localhost default.
-    let addr = env::args().nth(1).unwrap_or("127.0.0.1:8080".to_string());
+    //let addr = env::args().nth(1).unwrap_or("127.0.0.1:8080".to_string());
+    let addr = env::args().nth(1).unwrap_or("0.0.0.0:1090".to_string());
     let addr = addr.parse::<SocketAddr>().unwrap();
 
     // Initialize the various data structures we're going to use in our server.
@@ -119,12 +124,33 @@ fn main() {
         Ok(())
     });
 
+    // let stdout = File::create("/tmp/tokio-socks5.out").unwrap();
+    // let stderr = File::create("/tmp/tokio-socks5.err").unwrap();
+
+    // let daemonize = Daemonize::new()
+    //     .pid_file("/tmp/tokio-socks5.pid") // Every method except `new` and `start`
+    //     .chown_pid_file(true)      // is optional, see `Daemonize` documentation
+    //     .working_directory("/tmp") // for default behaviour.
+    //     .user("nobody")
+    //     .group("daemon") // Group name
+    //     .group(2)        // or group id.
+    //     .umask(0o777)    // Set umask, `0o027` by default.
+    //     .stdout(stdout)  // Redirect stdout to `/tmp/daemon.out`.
+    //     .stderr(stderr)  // Redirect stderr to `/tmp/daemon.err`.
+    //     .privileged_action(|| "Executed before drop privileges");
+
+    // match daemonize.start() {
+    //     Ok(_) => println!("Success, daemonized"),
+    //     Err(e) => eprintln!("Error, {}", e),
+    // }
+
     // Now that we've got our server as a future ready to go, let's run it!
     //
     // This `run` method will return the resolution of the future itself, but
     // our `server` futures will resolve to `io::Result<()>`, so we just want to
     // assert that it didn't hit an error.
     lp.run(server).unwrap();
+
 }
 
 // Data used to when processing a client to perform various operations over its
